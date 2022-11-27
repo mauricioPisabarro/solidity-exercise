@@ -8,24 +8,23 @@ enum Type {
     Character
 }
 
-contract Player {
+abstract contract Player {
     IGame private _game;
-    Type private _type;
+
     address private _owner;
     uint256 private _healthPoints;
     uint256 private _attackDamage;
     uint256 private _experiencePoints;
 
-    constructor(IGame _g, Type _t, uint256 _hp) {
+    constructor(IGame _g, uint256 _hp) {
         _game = _g;
-        _type = _t;
 
         _healthPoints = _hp;
         _attackDamage = 10;
         _experiencePoints = 0;
     }
 
-    function isDefeated() public view returns (bool) {
+    function isDefeated() external view returns (bool) {
         return _healthPoints <= 0;
     }
 
