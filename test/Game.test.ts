@@ -33,4 +33,14 @@ describe("Game contract", function () {
     const otherTx = gameContract.createBoss();
     await expect(otherTx).to.not.be.reverted;
   })
+
+  it("only allows one character per user", async function () {
+    const game = gameContract.connect(otherSigner);
+    const tx = game.createCharacter()
+
+    await expect(tx).to.not.be.reverted;
+
+    const otherTx = game.createCharacter();
+    await expect(otherTx).to.be.revertedWith("Only one character per user");
+  })
 });

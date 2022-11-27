@@ -6,7 +6,8 @@ import "./Player.sol";
 contract Game is IGame {
     address private _admin;
     Player[] private _bosses;
-    mapping(address => Player) private _characters;
+    Player[] private _characters;
+    mapping(address => int256) private _characterOwnerIdMap;
 
     constructor() {
         _admin = msg.sender;
@@ -21,7 +22,17 @@ contract Game is IGame {
         return _address == _admin;
     }
 
-    function createBoss() public override onlyAdmin {
+    function createBoss() external onlyAdmin {
         _bosses.push(new Player(this, Type.Boss));
+    }
+
+    function createCharacter() external {
+        require(
+            _characterOwnerIdMap[msg.sender] == 0,
+            "Only one character per user"
+        );
+
+        _characters.push(new Player(this, Type.Character));
+        _characterOwnerIdMap[msg.sender] = int256(_characters.length);
     }
 }
