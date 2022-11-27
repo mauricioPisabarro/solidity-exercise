@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npx hardhat test",
+    "compile": "npx hardhat compile",
     "test:gas": "REPORT_GAS=true npm run test",
     "lint": "npx solhint contracts/*",
     "deploy": "npx hardhat run scripts/deploy.ts"
