@@ -16,13 +16,17 @@ contract Player {
     uint256 private _attackDamage;
     uint256 private _experiencePoints;
 
-    constructor(IGame _g, Type _t) {
+    constructor(IGame _g, Type _t, uint256 _hp) {
         _game = _g;
         _type = _t;
 
-        _healthPoints = 100;
+        _healthPoints = _hp;
         _attackDamage = 10;
         _experiencePoints = 0;
+    }
+
+    function isDefeated() public view returns (bool) {
+        return _healthPoints <= 0;
     }
 
     function getHealthPoints() external view returns (uint256) {

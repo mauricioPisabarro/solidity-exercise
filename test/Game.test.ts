@@ -43,4 +43,12 @@ describe("Game contract", function () {
     const otherTx = game.createCharacter();
     await expect(otherTx).to.be.revertedWith("Only one character per user");
   })
+
+  it("only create boss if current boss is defeated", async function () {
+    const tx = gameContract.createBoss();
+    await expect(tx).to.not.be.reverted;
+
+    const otherTx = gameContract.createBoss();
+    await expect(otherTx).to.be.revertedWith("The current boss must be defeated");
+  })
 });
