@@ -35,20 +35,11 @@ describe("Game contract", function () {
   })
 
   it("only allows one character per user", async function () {
-    const game = gameContract.connect(otherSigner);
-    const tx = game.createCharacter()
+    const tx = gameContract.createCharacter()
+    await expect(tx).not.to.be.revertedWith("Only one character per user");
 
-    await expect(tx).to.not.be.reverted;
-
-    const otherTx = game.createCharacter();
+    const otherTx = gameContract.createCharacter()
     await expect(otherTx).to.be.revertedWith("Only one character per user");
   })
 
-  it("only create boss if current boss is defeated", async function () {
-    const tx = gameContract.createBoss();
-    await expect(tx).to.not.be.reverted;
-
-    const otherTx = gameContract.createBoss();
-    await expect(otherTx).to.be.revertedWith("The current boss must be defeated");
-  })
 });

@@ -9,12 +9,12 @@ enum Type {
 }
 
 abstract contract Player {
-    IGame private _game;
+    IGame internal _game;
 
-    address private _owner;
-    uint256 private _healthPoints;
-    uint256 private _attackDamage;
-    uint256 private _experiencePoints;
+    address internal _owner;
+    uint256 internal _healthPoints;
+    uint256 internal _attackDamage;
+    uint256 internal _experiencePoints;
 
     constructor(IGame _g, uint256 _hp) {
         _game = _g;
