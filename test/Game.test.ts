@@ -42,4 +42,23 @@ describe("Game contract", function () {
     await expect(otherTx).to.be.revertedWith("Only one character per user");
   })
 
+
+  it("revert populate boss if it does not exist", async function () {
+    const tx = gameContract.populateBoss(3);
+    await expect(tx).to.be.revertedWith("Boss does not exist");
+  })
+
+  it("revert populate boss if current boss is not defeated", async function () {
+    const tx = gameContract.createBoss();
+    await expect(tx).to.not.be.reverted;
+
+    const oneTx = gameContract.populateBoss(0);    
+    await expect(oneTx).to.not.be.reverted;
+
+    const otherTx = gameContract.createBoss();
+    await expect(otherTx).to.not.be.reverted;
+
+    const anotherTx = gameContract.populateBoss(1);
+    await expect(anotherTx).to.be.revertedWith("Current boss to be defeated");
+  })
 });

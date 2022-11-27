@@ -43,7 +43,7 @@ contract Game is IGame {
     }
 
     modifier onlyIfBossExists(uint256 _bossId) {
-        require(_bosses.length < _bossId, "Boss does not exist");
+        require(_bossId < _bosses.length, "Boss does not exist");
         _;
     }
 
