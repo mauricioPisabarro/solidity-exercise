@@ -26,11 +26,11 @@ describe("Game contract", function () {
 
   it("only allows admin to create a boss", async function () {
     const game = gameContract.connect(otherSigner);
-    const tx = game.createBoss()
+    const tx = game.createBoss(10, 10, 10)
 
     await expect(tx).to.be.revertedWith("Only the admin can do this");
 
-    const otherTx = gameContract.createBoss();
+    const otherTx = gameContract.createBoss(10, 10, 10);
     await expect(otherTx).to.not.be.reverted;
   })
 
@@ -49,13 +49,13 @@ describe("Game contract", function () {
   })
 
   it("revert populate boss if current boss is not defeated", async function () {
-    const tx = gameContract.createBoss();
+    const tx = gameContract.createBoss(10, 10, 10);
     await expect(tx).to.not.be.reverted;
 
     const oneTx = gameContract.populateBoss(0);    
     await expect(oneTx).to.not.be.reverted;
 
-    const otherTx = gameContract.createBoss();
+    const otherTx = gameContract.createBoss(10, 10, 10);
     await expect(otherTx).to.not.be.reverted;
 
     const anotherTx = gameContract.populateBoss(1);
