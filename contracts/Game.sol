@@ -25,6 +25,20 @@ contract Game is IGame {
     mapping(address => bool) private _userHasCharacter;
     mapping(int256 => bool) private _defeatedBosses;
 
+    event BossCreated(
+        uint256 indexed bossId,
+        uint256 healthPoints,
+        uint256 attackDamage,
+        uint256 offeredReward
+    );
+
+    event CharacterCreated(
+        uint256 indexed characterId,
+        uint256 healthPoints,
+        uint256 attackDamage,
+        uint256 healingPower
+    );
+
     event BossDefeated(
         uint256 indexed characterId,
         uint256 indexed bossId,
@@ -65,12 +79,23 @@ contract Game is IGame {
         _;
     }
 
+    modifier onlyIfCharacterExists(uint256 _characterId) {
+        require(
+            _characterId < _characters.length && _characterId >= 0,
+            "Character does not exist"
+        );
+        _;
+    }
+
     modifier onlyIfBossIsPopulated() {
         require(
             _currentBoss >= 0 && uint256(_currentBoss) < _bosses.length,
             "Current boss not populated"
         );
-        require(!_defeatedBosses[_currentBoss], "Current boss already defeated");
+        require(
+            !_defeatedBosses[_currentBoss],
+            "Current boss already defeated"
+        );
         _;
     }
 
@@ -112,6 +137,8 @@ contract Game is IGame {
         uint256 playerId = _bosses.length - 1;
         boss.setId(playerId);
 
+        emit BossCreated(playerId, _hps, _damage, _reward);
+
         return playerId;
     }
 
@@ -136,6 +163,13 @@ contract Game is IGame {
         character.setId(playerId);
         _userCharacterMap[msg.sender] = character;
         _userHasCharacter[msg.sender] = true;
+
+        emit CharacterCreated(
+            playerId,
+            character.getHealthPoints(),
+            character.getAttackDamage(),
+            character.getHealingPower()
+        );
 
         return playerId;
     }
@@ -185,5 +219,23 @@ contract Game is IGame {
         Character toHeal = _characters[_characterId];
 
         toHeal.heal(owned.getHealingPower());
+    }
+
+    function getCharacter(uint256 _characterId)
+        external
+        view
+        onlyIfCharacterExists(_characterId)
+        returns (Character)
+    {
+        return _characters[_characterId];
+    }
+
+    function getBoss(uint256 _bossId)
+        external
+        view
+        onlyIfBossExists(_bossId)
+        returns (Boss)
+    {
+        return _bosses[_bossId];
     }
 }
