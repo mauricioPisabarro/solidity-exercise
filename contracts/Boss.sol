@@ -23,7 +23,11 @@ contract Boss is Player {
         _;
     }
 
-    function getOfferedReward() public view returns (uint256) {
+    function getOfferedReward() external view returns (uint256) {
         return _offeredReward;
+    }
+
+    function getDefeatedReward() external view returns (uint256) {
+        return _offeredReward * 2;
     }
 }
