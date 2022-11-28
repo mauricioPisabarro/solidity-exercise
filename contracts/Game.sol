@@ -45,6 +45,12 @@ contract Game is IGame {
         uint256 reward
     );
 
+    event BossPopulated(
+        uint256 indexed characterId,
+        uint256 indexed bossId,
+        uint256 reward
+    );
+
     constructor() {
         _admin = msg.sender;
         _currentBoss = -1;
@@ -149,6 +155,11 @@ contract Game is IGame {
         onlyIfNoCurrentBossOrDefeated
     {
         _currentBoss = int256(_bossIndex);
+        emit BossPopulated(
+            _bossIndex,
+            _bossIndex,
+            _bosses[_bossIndex].getOfferedReward()
+        );
     }
 
     function createCharacter()

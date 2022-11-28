@@ -69,6 +69,14 @@ describe("Game contract", function () {
     await expect(anotherTx).to.be.revertedWith("Current boss to be defeated");
   });
 
+  it("emits populate boss event", async function () {
+    const tx = gameContract.createBoss(10, 10, 10);
+    await expect(tx).to.not.be.reverted;
+
+    const oneTx = await gameContract.populateBoss(0);
+    await expect(oneTx).to.emit(gameContract, "BossPopulated");
+  });
+
   it("emits event on boss defeat", async function () {
     // Creating weak boss
     const tx = gameContract.createBoss(1, 10, 10);
