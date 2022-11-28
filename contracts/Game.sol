@@ -70,7 +70,7 @@ contract Game is IGame {
             _currentBoss >= 0 && uint256(_currentBoss) < _bosses.length,
             "Current boss not populated"
         );
-        require(_defeatedBosses[_currentBoss], "Current boss already defeated");
+        require(!_defeatedBosses[_currentBoss], "Current boss already defeated");
         _;
     }
 

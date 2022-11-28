@@ -5,7 +5,7 @@ import { Game, Game__factory } from "../typechain";
 use(solidity);
 
 describe("Game contract", function () {
-  const [adminSigner, otherSigner] = new MockProvider().getWallets();
+  const [adminSigner, userSigner] = new MockProvider().getWallets();
   let gameContract: Game;
 
   beforeEach(async () => {
@@ -19,14 +19,14 @@ describe("Game contract", function () {
   });
 
   it("identifies other address as not admin", async function () {
-    const otherWalletIsNotAdmin = await gameContract.isAdmin(otherSigner.address);
+    const otherWalletIsNotAdmin = await gameContract.isAdmin(userSigner.address);
       
     expect(otherWalletIsNotAdmin).to.equal(false);
   })
 
   it("only allows admin to create a boss", async function () {
-    const game = gameContract.connect(otherSigner);
-    const tx = game.createBoss(10, 10, 10)
+    const gameFromPlayersPerspective = gameContract.connect(userSigner);
+    const tx = gameFromPlayersPerspective.createBoss(10, 10, 10)
 
     await expect(tx).to.be.revertedWith("Only the admin can do this");
 
@@ -60,5 +60,20 @@ describe("Game contract", function () {
 
     const anotherTx = gameContract.populateBoss(1);
     await expect(anotherTx).to.be.revertedWith("Current boss to be defeated");
+  })
+
+  it("emits event on boss defeat", async function () {
+    // Creating weak boss
+    const tx = gameContract.createBoss(1, 10, 10);
+    await expect(tx).to.not.be.reverted;
+    const oneTx = gameContract.populateBoss(0);    
+    await expect(oneTx).to.not.be.reverted;
+
+    const gameFromPlayersPerspective = gameContract.connect(userSigner);
+    const otherTx = gameFromPlayersPerspective.createCharacter();
+    await expect(otherTx).to.not.be.reverted;
+
+    const anotherTx = gameFromPlayersPerspective.attackBoss();
+    await expect(anotherTx).to.emit(gameContract, "BossDefeated");
   })
 });

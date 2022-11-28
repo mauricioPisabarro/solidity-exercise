@@ -17,6 +17,11 @@ abstract contract Player {
     uint256 internal _attackDamage;
 
     constructor(IGame _g, uint256 _hp, address _ownr) {
+        require(
+            _hp > 0 && _hp <= 100,
+            "The HP must be between 1 and 100"
+        );
+
         _game = _g;
         _owner = _ownr;
 
