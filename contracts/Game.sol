@@ -12,6 +12,7 @@ import "./Character.sol";
     populated. In any case, it wouldn't be to hard to change this, it would add a couple of parameters
     and mappings here and there.
     - Boss' defeated rewards are higher
+    - The admin can ahve a boss and a character
  */
 contract Game is IGame {
     address private _admin;
@@ -228,6 +229,10 @@ contract Game is IGame {
     {
         Character owned = _userCharacterMap[msg.sender];
         Character toHeal = _characters[_characterId];
+        require(
+            owned.getId() != toHeal.getId(),
+            "You cannot heal yourself"
+        );
 
         toHeal.heal(owned.getHealingPower());
     }

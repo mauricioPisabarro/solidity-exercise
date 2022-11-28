@@ -1,7 +1,6 @@
 import { expect, use } from "chai";
 import { MockProvider, solidity, deployContract } from "ethereum-waffle";
-import { BigNumberish, Event } from "ethers";
-import { defaultAbiCoder } from "ethers/lib/utils";
+import { BigNumberish, ContractTransaction, Event, Wallet } from "ethers";
 import { Game, Game__factory } from "../typechain";
 
 use(solidity);
@@ -94,11 +93,7 @@ describe("Game contract", function () {
 
   it("gets existing boss", async function () {
     const tx = await gameContract.createBoss(10, 10, 10);
-    const txReceipt = await tx.wait();
-    const createdBoss: Event = txReceipt.events?.find(
-      (event) => event.event === "BossCreated"
-    ) as Event;
-    const { bossId } = createdBoss.args as any;
+    const bossId = await getCreatedBossId(tx);
 
     const boss = await gameContract.getBoss(bossId);
     expect(boss).to.not.be.null;
@@ -106,13 +101,67 @@ describe("Game contract", function () {
 
   it("gets existing character", async function () {
     const tx = await gameContract.createCharacter();
-    const txReceipt = await tx.wait();
+    const characterId: BigNumberish = await getCreatedCharacterId(tx);
+
+    const character = await gameContract.getCharacter(characterId);
+    expect(character).to.not.be.null;
+  });
+
+  it("prevents unexperienced users from healing", async function () {
+    const { userOwnedCharacterId } = await getCharactersAndBoss(
+      gameContract,
+      userSigner
+    );
+
+    const gameFromPlayersPerspective = gameContract.connect(userSigner);
+    const tx = gameFromPlayersPerspective.heal(userOwnedCharacterId);
+
+    await expect(tx).to.be.revertedWith("You need a character with XP");
+  });
+
+  it("prevents from healing themselves", async function () {
+    const { adminOwnedCharacterId } = await getCharactersAndBoss(gameContract, userSigner);
+
+    await (await gameContract.attackBoss()).wait();
+
+    const tx = gameContract.heal(adminOwnedCharacterId);
+    await expect(tx).to.be.revertedWith("You cannot heal yourself");
+  });
+});
+
+async function getCharactersAndBoss(gameContract: Game, userSigner: Wallet) {
+  const tx = await gameContract.createCharacter();
+  const adminOwnedCharacterId: BigNumberish = await getCreatedCharacterId(tx);
+
+  const gameFromPlayersPerspective = gameContract.connect(userSigner);
+  const anotherTx = await gameFromPlayersPerspective.createCharacter();
+  const userOwnedCharacterId = await getCreatedCharacterId(anotherTx);
+
+  const txBoss = await gameContract.createBoss(100, 10, 1);
+  const bossId = await getCreatedBossId(txBoss);
+
+  const populateBossTx = await gameContract.populateBoss(bossId);
+  await populateBossTx.wait();
+
+  return { adminOwnedCharacterId, userOwnedCharacterId, bossId };
+}
+
+async function getCreatedCharacterId(tx: ContractTransaction): Promise<BigNumberish> {
+  const txReceipt = await tx.wait();
     const createdCharacter: Event = txReceipt.events?.find(
       (event) => event.event === "CharacterCreated"
     ) as Event;
     const { characterId } = createdCharacter.args as any;
 
-    const boss = await gameContract.getCharacter(characterId);
-    expect(boss).to.not.be.null;
-  });
-});
+    return characterId;
+}
+
+async function getCreatedBossId(tx: ContractTransaction): Promise<BigNumberish> {
+  const txReceipt = await tx.wait();
+    const createdBoss: Event = txReceipt.events?.find(
+      (event) => event.event === "BossCreated"
+    ) as Event;
+    const { bossId } = createdBoss.args as any;
+
+    return bossId;
+}
