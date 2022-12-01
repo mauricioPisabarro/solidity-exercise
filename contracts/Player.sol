@@ -41,7 +41,7 @@ abstract contract Player {
         _id = _i;
     }
 
-    function receiveAttack(uint256 damage) external onlyGame returns (bool) {
+    function receiveAttack(uint256 damage) public virtual onlyGame returns (bool) {
         if (damage >= _healthPoints) {
             _healthPoints = 0;
             return true;

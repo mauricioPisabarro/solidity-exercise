@@ -6,8 +6,9 @@ import "./Player.sol";
 
 contract Character is Player {
     uint256 private constant _maxHealthPoints = 100;
-    uint256 internal _experiencePoints;
-    uint256 internal _healingPower;
+    uint256 private constant _xpLossOnDeath = 5;
+    uint256 private _experiencePoints;
+    uint256 private _healingPower;
 
     constructor(
         IGame _g,
@@ -20,31 +21,52 @@ contract Character is Player {
         _healingPower = (random(3) % _maxHealthPoints) + 1;
     }
 
-    function random(uint256 _randSeed) private view returns (uint256) {
-        // THIS COULD BE EXPLOITED.
-        // The best way would be to take the random aspect outside of the blockhain,
-        // probably calling a propietary API.
-        // https://stackoverflow.com/questions/48848948/how-to-generate-a-random-number-in-solidity
-        return uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, _randSeed)));
-    } 
-
     function getExperiencePoints() external view returns (uint256) {
         return _experiencePoints;
-    }
-
-    function receiveExperiencePoints(uint256 _points) public onlyGame {
-        _experiencePoints += _points;
     }
 
     function getHealingPower() external view returns (uint256) {
         return _healingPower;
     }
 
-    function heal(uint256 _hp) external onlyGame {
+    function receiveAttack(uint256 damage)
+        public
+        override(Player)
+        onlyGame
+        returns (bool)
+    {
+        bool isDead = super.receiveAttack(damage);
+        if (isDead) {
+            _experiencePoints = _experiencePoints < _xpLossOnDeath
+                ? 0
+                : _experiencePoints - _xpLossOnDeath;
+        }
+
+        return isDead;
+    }
+
+    function receiveExperiencePoints(uint256 _points) public onlyGame {
+        _experiencePoints += _points;
+    }
+
+    function heal(uint256 _hp) public onlyGame {
         if (_healthPoints + _hp > _maxHealthPoints) {
             _healthPoints = _maxHealthPoints;
         } else {
             _healthPoints += _hp;
         }
+    }
+
+    function random(uint256 _randSeed) private view returns (uint256) {
+        // THIS COULD BE EXPLOITED.
+        // The best way would be to take the random aspect outside of the blockhain,
+        // probably calling a propietary API.
+        // https://stackoverflow.com/questions/48848948/how-to-generate-a-random-number-in-solidity
+        return
+            uint256(
+                keccak256(
+                    abi.encodePacked(block.timestamp, msg.sender, _randSeed)
+                )
+            );
     }
 }

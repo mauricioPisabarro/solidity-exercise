@@ -130,10 +130,6 @@ contract Game is IGame {
         _;
     }
 
-    function isAdmin(address _address) public view override returns (bool) {
-        return _address == _admin;
-    }
-
     function createBoss(
         uint256 _hps,
         uint256 _reward,
@@ -229,10 +225,7 @@ contract Game is IGame {
     {
         Character owned = _userCharacterMap[msg.sender];
         Character toHeal = _characters[_characterId];
-        require(
-            owned.getId() != toHeal.getId(),
-            "You cannot heal yourself"
-        );
+        require(owned.getId() != toHeal.getId(), "You cannot heal yourself");
 
         toHeal.heal(owned.getHealingPower());
     }
@@ -253,5 +246,9 @@ contract Game is IGame {
         returns (Boss)
     {
         return _bosses[_bossId];
+    }
+
+    function isAdmin(address _address) public view override returns (bool) {
+        return _address == _admin;
     }
 }
