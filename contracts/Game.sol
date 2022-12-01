@@ -130,6 +130,11 @@ contract Game is IGame {
         _;
     }
 
+    modifier onlyThis() {
+        require(msg.sender == address(this), "Only the game can do this");
+        _;
+    }
+
     function createBoss(
         uint256 _hps,
         uint256 _reward,
@@ -188,34 +193,18 @@ contract Game is IGame {
         needToOwnACharacter
         returns (bool)
     {
-        Character character = _userCharacterMap[msg.sender];
-        require(!character.isDead(), "Character is dead, can't attack");
-        Boss boss = _bosses[uint256(_currentBoss)];
+        Character attacker = _userCharacterMap[msg.sender];
+        return this.attack(attacker, attacker.getAttackDamage());
+    }
 
-        bool isBossDefeated = boss.receiveAttack(character.getAttackDamage());
-        if (isBossDefeated) {
-            uint256 reward = boss.getDefeatedReward();
-            character.receiveExperiencePoints(reward);
-            _defeatedBosses[_currentBoss] = true;
-            _currentBoss = -1;
-
-            emit BossDefeated(
-                character.getId(),
-                boss.getId(),
-                boss.getDefeatedReward()
-            );
-
-            return true;
-        }
-
-        bool isCharacterDefeated = character.receiveAttack(
-            boss.getAttackDamage()
-        );
-        if (!isCharacterDefeated) {
-            character.receiveExperiencePoints(boss.getOfferedReward());
-        }
-
-        return false;
+    function performFireSpell()
+        external
+        onlyIfBossIsPopulated
+        needToOwnACharacter
+        returns (bool)
+    {
+        Character attacker = _userCharacterMap[msg.sender];
+        return this.attack(attacker, attacker.performFireSpell());
     }
 
     function heal(uint256 _characterId)
@@ -227,7 +216,7 @@ contract Game is IGame {
         Character toHeal = _characters[_characterId];
         require(owned.getId() != toHeal.getId(), "You cannot heal yourself");
 
-        toHeal.heal(owned.getHealingPower());
+        toHeal.receiveHealingSpell(owned.heal());
     }
 
     function getCharacter(uint256 _characterId)
@@ -250,5 +239,39 @@ contract Game is IGame {
 
     function isAdmin(address _address) public view override returns (bool) {
         return _address == _admin;
+    }
+
+    function attack(Character _attacker, uint256 _damage)
+        public
+        onlyThis
+        returns (bool)
+    {
+        require(!_attacker.isDead(), "Character is dead, can't attack");
+        Boss boss = _bosses[uint256(_currentBoss)];
+
+        bool isBossDefeated = boss.receiveAttack(_damage);
+        if (isBossDefeated) {
+            uint256 reward = boss.getDefeatedReward();
+            _attacker.receiveExperiencePoints(reward);
+            _defeatedBosses[_currentBoss] = true;
+            _currentBoss = -1;
+
+            emit BossDefeated(
+                _attacker.getId(),
+                boss.getId(),
+                boss.getDefeatedReward()
+            );
+
+            return true;
+        }
+
+        bool isCharacterDefeated = _attacker.receiveAttack(
+            boss.getAttackDamage()
+        );
+        if (!isCharacterDefeated) {
+            _attacker.receiveExperiencePoints(boss.getOfferedReward());
+        }
+
+        return false;
     }
 }

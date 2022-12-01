@@ -9,6 +9,7 @@ contract Character is Player {
     uint256 private constant _xpLossOnDeath = 5;
     uint256 private _experiencePoints;
     uint256 private _healingPower;
+    uint256 private _lastFireSpellTimestamp = 0;
 
     constructor(
         IGame _g,
@@ -27,6 +28,28 @@ contract Character is Player {
 
     function getHealingPower() external view returns (uint256) {
         return _healingPower;
+    }
+
+    function getFireSpellDamage() external view returns (uint256) {
+        return _attackDamage * 2;
+    }
+
+    function getLevel() external view returns (uint256) {
+        // This makes it harder to level up for characters who got lucky
+        // with attack damage.
+        return (_experiencePoints / _attackDamage) + 1;
+    }
+
+    function performFireSpell() public returns (uint256) {
+        require(this.getLevel() >= 3, "Need to be at least level 3");
+        require(
+            block.timestamp - _lastFireSpellTimestamp >= 24 hours,
+            "1 fire spell per 24hrs"
+        );
+
+        _lastFireSpellTimestamp = block.timestamp;
+
+        return this.getFireSpellDamage();
     }
 
     function receiveAttack(uint256 damage)
@@ -49,12 +72,18 @@ contract Character is Player {
         _experiencePoints += _points;
     }
 
-    function heal(uint256 _hp) public onlyGame {
+    function receiveHealingSpell(uint256 _hp) public onlyGame {
         if (_healthPoints + _hp > _maxHealthPoints) {
             _healthPoints = _maxHealthPoints;
         } else {
             _healthPoints += _hp;
         }
+    }
+
+    function heal() public view onlyGame returns (uint256) {
+        require(this.getLevel() == 2, "Need to be at least level 2");
+
+        return _healingPower;
     }
 
     function random(uint256 _randSeed) private view returns (uint256) {
